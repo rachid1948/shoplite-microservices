@@ -4,6 +4,7 @@ import com.shoplite.productservice.dto.ProductRequestDto;
 import com.shoplite.productservice.dto.ProductResponseDto;
 import com.shoplite.productservice.entity.Product;
 import com.shoplite.productservice.exception.DuplicateSkuException;
+import com.shoplite.productservice.exception.ProductNotFoundException;
 import com.shoplite.productservice.mapper.ProductMapper;
 import com.shoplite.productservice.repository.ProductRepository;
 import com.shoplite.productservice.service.ProductService;
@@ -34,35 +35,39 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDto updateProduct(Long id, ProductRequestDto dto) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+    public ProductResponseDto updateProduct(Long id, ProductRequestDto request) {
 
-        // Si on change le SKU, vérifier qu’il n’est pas déjà utilisé
-        if (!product.getSku().equals(dto.getSku())
-                && productRepository.existsBySku(dto.getSku())) {
-            throw new RuntimeException("A product with this SKU already exists.");
-        }
+        Product existing = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
-        ProductMapper.updateEntityFromDto(dto, product);
+        // ici tu peux mettre une méthode mapper pour update
+        existing.setName(request.getName());
+        existing.setSku(request.getSku());
+        existing.setPrice(request.getPrice());
+        existing.setQuantityInStock(request.getQuantityInStock());
+        existing.setDescription(request.getDescription());
+        // existing.setUpdatedAt(LocalDateTime.now()); // plus tard avec l’audit
 
-        product = productRepository.save(product);
+        Product saved = productRepository.save(existing);
 
-        return ProductMapper.toResponseDto(product);
+        return ProductMapper.toResponseDto(saved);
     }
+
 
     @Override
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Product not found");
+            throw new ProductNotFoundException(id);
         }
+
         productRepository.deleteById(id);
     }
+
 
     @Override
     public ProductResponseDto getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
         return ProductMapper.toResponseDto(product);
     }
