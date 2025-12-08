@@ -3,6 +3,7 @@ package com.shoplite.productservice.service.impl;
 import com.shoplite.productservice.dto.ProductRequestDto;
 import com.shoplite.productservice.dto.ProductResponseDto;
 import com.shoplite.productservice.entity.Product;
+import com.shoplite.productservice.exception.DuplicateSkuException;
 import com.shoplite.productservice.mapper.ProductMapper;
 import com.shoplite.productservice.repository.ProductRepository;
 import com.shoplite.productservice.service.ProductService;
@@ -21,12 +22,12 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
     @Override
-    public ProductResponseDto createProduct(ProductRequestDto dto) {
-        if (productRepository.existsBySku(dto.getSku())) {
-            throw new RuntimeException("A product with this SKU already exists.");
+    public ProductResponseDto createProduct(ProductRequestDto request) {
+        if (productRepository.existsBySku(request.getSku())) {
+            throw new DuplicateSkuException(request.getSku());
         }
 
-        Product product = ProductMapper.toEntity(dto);
+        Product product = ProductMapper.toEntity(request);
         product = productRepository.save(product);
 
         return ProductMapper.toResponseDto(product);
