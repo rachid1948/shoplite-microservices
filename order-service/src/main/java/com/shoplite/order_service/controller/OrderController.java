@@ -1,13 +1,19 @@
 package com.shoplite.order_service.controller;
 
+import com.shoplite.order_service.domain.enums.OrderStatus;
 import com.shoplite.order_service.dto.request.OrderRequestDto;
+import com.shoplite.order_service.dto.request.OrderUpdateRequestDto;
 import com.shoplite.order_service.dto.request.UpdateOrderStatusRequestDto;
 import com.shoplite.order_service.dto.response.OrderResponseDto;
+import com.shoplite.order_service.dto.search.OrderSearchCriteria;
 import com.shoplite.order_service.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
 
 
 @RestController
@@ -27,11 +33,6 @@ public class OrderController {
         return orderService.getOrderById(id);
     }
 
-    @GetMapping
-    public List<OrderResponseDto> getAll() {
-        return orderService.getAllOrders();
-    }
-
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         orderService.deleteOrder(id);
@@ -44,6 +45,30 @@ public class OrderController {
     ) {
         return orderService.updateOrderStatus(id, request.status());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderResponseDto> update(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderUpdateRequestDto dto
+    ) {
+        OrderResponseDto response = orderService.updateOrder(id, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<OrderResponseDto>> search(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) OrderStatus status,
+            Pageable pageable
+    ) {
+        OrderSearchCriteria criteria = new OrderSearchCriteria(customerId, status);
+        Page<OrderResponseDto> page = orderService.getOrders(criteria, pageable);
+        return ResponseEntity.ok(page);
+    }
+
+
+
+
 
 
 }

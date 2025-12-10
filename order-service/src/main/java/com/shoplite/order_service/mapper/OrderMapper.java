@@ -39,7 +39,7 @@ public final class OrderMapper {
         return order;
     }
 
-    private static OrderItem toEntity(OrderItemRequestDto dto, Order order) {
+    public static OrderItem toEntity(OrderItemRequestDto dto, Order order) {
         if (dto == null) {
             return null;
         }
