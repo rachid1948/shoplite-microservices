@@ -3,18 +3,23 @@ package com.shoplite.order_service.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-@Data
-public class OrderItemRequestDto {
+import java.math.BigDecimal;
 
-    @NotNull
-    private Long productId;
+public record OrderItemRequestDto(
+        @NotNull(message = "productId ne doit pas être nul")
+        Long productId,
 
-    @NotBlank
-    private String sku;
+        @NotBlank(message = "productName ne doit pas être vide")
+        String productName,
 
-    @NotNull
-    @Min(1)
-    private Integer quantity;
-}
+        @NotNull(message = "quantity ne doit pas être nulle")
+        @Positive(message = "quantity doit être > 0")
+        Integer quantity,
+
+        @NotNull(message = "unitPrice ne doit pas être nul")
+        @Positive(message = "unitPrice doit être > 0")
+        BigDecimal unitPrice
+) {}

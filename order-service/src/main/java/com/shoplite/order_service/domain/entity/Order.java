@@ -1,10 +1,9 @@
-package com.shoplite.order_service.entity;
+package com.shoplite.order_service.domain.entity;
 
-import com.shoplite.order_service.enums.OrderStatus;
+import com.shoplite.order_service.domain.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,28 +14,26 @@ import java.util.List;
 @Table(name = "orders")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ex: ORD-20251209-0001
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true)
     private String orderNumber;
 
-    // pour l’instant on stocke juste l’ID du client en String (découplé)
-    @Column(nullable = false, length = 100)
-    private String customerId;
+    @Column(nullable = false)
+    private Long customerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private OrderStatus status;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false)
     private BigDecimal totalAmount;
 
     @OneToMany(
@@ -44,17 +41,31 @@ public class Order {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
-    @CreationTimestamp
-    @Column(updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // helper pour garder la cohérence des associations
+    @PrePersist
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+        if (this.status == null) {
+            this.status = OrderStatus.PENDING;
+        }
+        if (this.totalAmount == null) {
+            this.totalAmount = BigDecimal.ZERO;
+        }
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
