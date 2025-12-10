@@ -26,6 +26,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto createOrder(OrderRequestDto request) {
         Order order = OrderMapper.toEntity(request);
+        BigDecimal totalAmount = order.getItems().stream()
+                .map(OrderItem::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        order.setTotalAmount(totalAmount);
+
         order = orderRepository.save(order);
         return OrderMapper.toResponseDto(order);
     }
