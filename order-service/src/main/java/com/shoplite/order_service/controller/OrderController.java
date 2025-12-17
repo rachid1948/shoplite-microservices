@@ -1,6 +1,8 @@
 package com.shoplite.order_service.controller;
 
+import com.shoplite.order_service.client.ProductClient;
 import com.shoplite.order_service.domain.enums.OrderStatus;
+import com.shoplite.order_service.dto.request.OrderCreateRequestDto;
 import com.shoplite.order_service.dto.request.OrderRequestDto;
 import com.shoplite.order_service.dto.request.OrderUpdateRequestDto;
 import com.shoplite.order_service.dto.request.UpdateOrderStatusRequestDto;
@@ -22,11 +24,19 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ProductClient productClient;
+
+    @GetMapping("/product/{id}")
+    public Object testProduct(@PathVariable Long id) {
+        return productClient.getProductById(id);
+    }
 
     @PostMapping
-    public OrderResponseDto create(@Valid @RequestBody OrderRequestDto dto) {
+    public OrderResponseDto create(@Valid @RequestBody OrderCreateRequestDto dto) {
         return orderService.createOrder(dto);
     }
+
+
 
     @GetMapping("/{id}")
     public OrderResponseDto getById(@PathVariable Long id) {
