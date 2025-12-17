@@ -1,4 +1,5 @@
 package com.shoplite.order_service.service;
+import com.shoplite.order_service.dto.request.OrderCreateRequestDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +14,8 @@ import java.util.List;
 
 public interface OrderService {
 
-    OrderResponseDto createOrder(OrderRequestDto request);
+    OrderResponseDto createOrder(OrderCreateRequestDto dto);
+
 
     OrderResponseDto getOrderById(Long id);
 

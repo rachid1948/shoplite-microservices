@@ -1,7 +1,9 @@
 package com.shoplite.order_service.service.impl;
 
+import com.shoplite.order_service.client.ProductClient;
 import com.shoplite.order_service.domain.entity.OrderItem;
 import com.shoplite.order_service.domain.enums.OrderStatus;
+import com.shoplite.order_service.dto.request.OrderCreateRequestDto;
 import com.shoplite.order_service.dto.request.OrderRequestDto;
 import com.shoplite.order_service.dto.request.OrderUpdateRequestDto;
 import com.shoplite.order_service.dto.response.OrderResponseDto;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,19 +32,50 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final ProductClient productClient;
+
 
     @Override
-    public OrderResponseDto createOrder(OrderRequestDto request) {
-        Order order = OrderMapper.toEntity(request);
-        BigDecimal totalAmount = order.getItems().stream()
+    public OrderResponseDto createOrder(OrderCreateRequestDto dto) {
+
+        // 1) créer l'entité Order (sans items si tu veux)
+        Order order = new Order();
+        order.setCustomerId(dto.customerId());
+        order.setStatus(OrderStatus.PENDING);
+        order.setOrderNumber("ORD-" + UUID.randomUUID());
+
+        // 2) construire les items enrichis (snapshot)
+        List<OrderItem> items = dto.items().stream().map(it -> {
+            var product = productClient.getProductById(it.productId()); // Feign
+
+            OrderItem item = new OrderItem();
+            item.setProductId(it.productId());
+            item.setProductName(product.name());
+            item.setUnitPrice(product.price());
+
+            item.setQuantity(it.quantity());
+
+            BigDecimal lineTotal = product.price().multiply(BigDecimal.valueOf(it.quantity()));
+            item.setLineTotal(lineTotal);
+
+            item.setOrder(order); // si relation ManyToOne
+            return item;
+        }).toList();
+
+        order.setItems(items);
+
+        // 3) totalAmount = somme des lineTotal (qui ne sont plus null)
+        BigDecimal totalAmount = items.stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         order.setTotalAmount(totalAmount);
 
-        order = orderRepository.save(order);
-        return OrderMapper.toResponseDto(order);
+        // 4) save
+        Order saved = orderRepository.save(order);
+        return OrderMapper.toResponseDto(saved);
     }
+
 
     @Override
     @Transactional(readOnly = true)

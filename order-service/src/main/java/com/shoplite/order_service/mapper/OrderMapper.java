@@ -3,6 +3,7 @@ package com.shoplite.order_service.mapper;
 import com.shoplite.order_service.domain.entity.Order;
 import com.shoplite.order_service.domain.entity.OrderItem;
 import com.shoplite.order_service.domain.enums.OrderStatus;
+import com.shoplite.order_service.dto.request.OrderCreateRequestDto;
 import com.shoplite.order_service.dto.request.OrderItemRequestDto;
 import com.shoplite.order_service.dto.request.OrderRequestDto;
 import com.shoplite.order_service.dto.response.OrderItemResponseDto;
@@ -55,6 +56,27 @@ public final class OrderMapper {
                 .lineTotal(lineTotal)
                 .build();
     }
+
+    public static Order toEntity(OrderCreateRequestDto dto) {
+        Order order = new Order();
+        order.setCustomerId(dto.customerId());
+        order.setStatus(OrderStatus.PENDING);
+
+        // items: on ne connait pas encore productName/unitPrice ici
+        List<OrderItem> items = dto.items().stream()
+                .map(itemDto -> {
+                    OrderItem item = new OrderItem();
+                    item.setProductId(itemDto.productId());
+                    item.setQuantity(itemDto.quantity());
+                    // productName + unitPrice seront enrichis après (étape suivante)
+                    return item;
+                })
+                .toList();
+
+        order.setItems(items);
+        return order;
+    }
+
 
     // Entity -> DTO (lecture)
     public static OrderResponseDto toResponseDto(Order order) {
