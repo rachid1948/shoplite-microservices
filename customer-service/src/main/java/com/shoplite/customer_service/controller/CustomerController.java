@@ -3,6 +3,7 @@ package com.shoplite.customer_service.controller;
 import com.shoplite.customer_service.dto.CustomerRequestDto;
 import com.shoplite.customer_service.dto.CustomerResponseDto;
 import com.shoplite.customer_service.service.CustomerService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
+@Tag(name = "Customers")
 public class CustomerController {
 
     private final CustomerService customerService;
