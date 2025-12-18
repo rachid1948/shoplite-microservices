@@ -3,6 +3,7 @@ package com.shoplite.productservice.controller;
 import com.shoplite.productservice.dto.ProductRequestDto;
 import com.shoplite.productservice.dto.ProductResponseDto;
 import com.shoplite.productservice.service.ProductService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
+@Tag(name = "Products")
 public class ProductController {
 
     private final ProductService productService;

@@ -9,6 +9,7 @@ import com.shoplite.order_service.dto.request.UpdateOrderStatusRequestDto;
 import com.shoplite.order_service.dto.response.OrderResponseDto;
 import com.shoplite.order_service.dto.search.OrderSearchCriteria;
 import com.shoplite.order_service.service.OrderService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Tag(name = "Orders")
 public class OrderController {
 
     private final OrderService orderService;
