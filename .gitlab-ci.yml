@@ -55,13 +55,10 @@ docker-push-api-gateway:
   needs:
     - job: build-jars
       artifacts: true
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+  only:
+    - main
   script:
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-    - echo "USERNAME='${DOCKERHUB_USERNAME:-EMPTY}'"
-
-
-    # build (using artifacts) then push
     - docker build -t "$DOCKERHUB_USERNAME/shoplite-api-gateway:$CI_COMMIT_SHORT_SHA" ./api-gateway
     - docker push "$DOCKERHUB_USERNAME/shoplite-api-gateway:$CI_COMMIT_SHORT_SHA"
+
