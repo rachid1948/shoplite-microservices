@@ -19,16 +19,14 @@ test:
 
 docker-build:
   stage: docker
-  image: docker:27
+  image: maven:3.9-eclipse-temurin-21
   services:
     - docker:27-dind
   variables:
     DOCKER_TLS_CERTDIR: ""
-  script:
+  before_script:
+    - apt-get update && apt-get install -y docker.io
     - docker version
+  script:
+    - mvn -pl api-gateway -am -DskipTests clean package
     - docker build -t shoplite-api-gateway:ci ./api-gateway
-    - docker build -t shoplite-config-server:ci ./config-server
-    - docker build -t shoplite-customer-service:ci ./customer-service
-    - docker build -t shoplite-discovery-server:ci ./discovery-server
-    - docker build -t shoplite-order-service:ci ./order-service
-    - docker build -t shoplite-product-service:ci ./product-service
