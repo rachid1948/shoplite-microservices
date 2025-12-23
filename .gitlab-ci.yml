@@ -3,6 +3,7 @@ image: maven:3.9-eclipse-temurin-21
 stages:
   - build
   - test
+  - docker
 
 build:
   stage: build
@@ -15,3 +16,14 @@ test:
   script:
     - java -version
     - mvn -B test
+
+docker-build:
+  stage: docker
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker version
+    - docker build -t shoplite:ci
