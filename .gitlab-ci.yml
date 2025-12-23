@@ -45,7 +45,7 @@ docker-build:
     - docker build -t shoplite-order-service:ci ./order-service
     - docker build -t shoplite-product-service:ci ./product-service
 
-docker-push-api-gateway:
+docker-push:
   stage: docker
   image: docker:27
   services:
@@ -59,6 +59,16 @@ docker-push-api-gateway:
     - main
   script:
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-    - docker build -t "$DOCKERHUB_USERNAME/shoplite-api-gateway:$CI_COMMIT_SHORT_SHA" ./api-gateway
-    - docker push "$DOCKERHUB_USERNAME/shoplite-api-gateway:$CI_COMMIT_SHORT_SHA"
+
+    - SERVICES="api-gateway config-server discovery-server product-service order-service customer-service"
+
+    - for S in $SERVICES; do
+      IMG="$DOCKERHUB_USERNAME/shoplite-$S";
+      echo "==> Building $IMG:$CI_COMMIT_SHORT_SHA";
+      docker build -t "$IMG:$CI_COMMIT_SHORT_SHA" "./$S";
+      echo "==> Pushing $IMG:$CI_COMMIT_SHORT_SHA";
+      docker push "$IMG:$CI_COMMIT_SHORT_SHA";
+      done
+
+
 
