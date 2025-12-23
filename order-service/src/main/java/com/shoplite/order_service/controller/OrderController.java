@@ -1,86 +1,64 @@
 package com.shoplite.order_service.controller;
 
+import com.shoplite.order_service.api.OrderApi;
 import com.shoplite.order_service.client.ProductClient;
 import com.shoplite.order_service.domain.enums.OrderStatus;
 import com.shoplite.order_service.dto.request.OrderCreateRequestDto;
-import com.shoplite.order_service.dto.request.OrderRequestDto;
 import com.shoplite.order_service.dto.request.OrderUpdateRequestDto;
 import com.shoplite.order_service.dto.request.UpdateOrderStatusRequestDto;
 import com.shoplite.order_service.dto.response.OrderResponseDto;
 import com.shoplite.order_service.dto.search.OrderSearchCriteria;
 import com.shoplite.order_service.service.OrderService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "Orders")
-public class OrderController {
+public class OrderController implements OrderApi {
 
     private final OrderService orderService;
     private final ProductClient productClient;
 
-    @GetMapping("/product/{id}")
-    public Object testProduct(@PathVariable Long id) {
-        return productClient.getProductById(id);
+    @Override
+    public ResponseEntity<Object> testProduct(Long id) {
+        return ResponseEntity.ok(productClient.getProductById(id));
     }
 
-    @PostMapping
-    public OrderResponseDto create(@Valid @RequestBody OrderCreateRequestDto dto) {
-        return orderService.createOrder(dto);
+    @Override
+    public ResponseEntity<OrderResponseDto> create(@Valid OrderCreateRequestDto dto) {
+        OrderResponseDto created = orderService.createOrder(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-
-
-    @GetMapping("/{id}")
-    public OrderResponseDto getById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
+    @Override
+    public ResponseEntity<OrderResponseDto> getById(Long id) {
+        return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<Void> delete(Long id) {
         orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/status")
-    public OrderResponseDto updateStatus(
-            @PathVariable Long id,
-            @RequestBody @Valid UpdateOrderStatusRequestDto request
-    ) {
-        return orderService.updateOrderStatus(id, request.status());
+    @Override
+    public ResponseEntity<OrderResponseDto> updateStatus(Long id, @Valid UpdateOrderStatusRequestDto request) {
+        return ResponseEntity.ok(orderService.updateOrderStatus(id, request.status()));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> update(
-            @PathVariable Long id,
-            @Valid @RequestBody OrderUpdateRequestDto dto
-    ) {
-        OrderResponseDto response = orderService.updateOrder(id, dto);
-        return ResponseEntity.ok(response);
+    @Override
+    public ResponseEntity<OrderResponseDto> update(Long id, @Valid OrderUpdateRequestDto dto) {
+        return ResponseEntity.ok(orderService.updateOrder(id, dto));
     }
 
-    @GetMapping
-    public ResponseEntity<Page<OrderResponseDto>> search(
-            @RequestParam(required = false) Long customerId,
-            @RequestParam(required = false) OrderStatus status,
-            Pageable pageable
-    ) {
+    @Override
+    public ResponseEntity<Page<OrderResponseDto>> search(Long customerId, OrderStatus status, Pageable pageable) {
         OrderSearchCriteria criteria = new OrderSearchCriteria(customerId, status);
-        Page<OrderResponseDto> page = orderService.getOrders(criteria, pageable);
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(orderService.getOrders(criteria, pageable));
     }
-
-
-
-
-
-
 }

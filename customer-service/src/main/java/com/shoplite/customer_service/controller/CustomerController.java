@@ -1,51 +1,52 @@
 package com.shoplite.customer_service.controller;
 
+
 import com.shoplite.customer_service.dto.CustomerRequestDto;
 import com.shoplite.customer_service.dto.CustomerResponseDto;
 import com.shoplite.customer_service.service.CustomerService;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
-@Tag(name = "Customers")
-public class CustomerController {
+public class CustomerController implements CustomerApi {
 
     private final CustomerService customerService;
 
-    @GetMapping
+    @Override
     public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
         return ResponseEntity.ok(customerService.getAllCustomers());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponseDto> getCustomer(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<CustomerResponseDto> getCustomer(Long id) {
         return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<CustomerResponseDto> createCustomer(
-            @RequestBody CustomerRequestDto request) {
-        return ResponseEntity.ok(customerService.createCustomer(request));
+    @Override
+    public ResponseEntity<CustomerResponseDto> createCustomer(@Valid CustomerRequestDto request) {
+        CustomerResponseDto created = customerService.createCustomer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public CustomerResponseDto update(@PathVariable Long id, @RequestBody CustomerRequestDto dto) {
-        return customerService.updateCustomer(id, dto);
+    @Override
+    public ResponseEntity<CustomerResponseDto> update(Long id, @Valid CustomerRequestDto dto) {
+        return ResponseEntity.ok(customerService.updateCustomer(id, dto));
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<Void> delete(Long id) {
         customerService.deleteCustomer(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}/exists")
-    public ResponseEntity<Boolean> customerExists(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<Boolean> customerExists(Long id) {
         return ResponseEntity.ok(customerService.customerExists(id));
     }
 }
