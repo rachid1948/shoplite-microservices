@@ -1,5 +1,6 @@
 package com.shoplite.customer_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
 public record CustomerRequestDto(
         @NotBlank(message = "First name is required")
         @Size(max = 100, message = "First name must be at most 100 characters")
+        //@Schema(example = "rachid",name = "first")
         String firstName,
 
         @NotBlank(message = "Last name is required")
