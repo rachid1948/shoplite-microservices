@@ -1,0 +1,217 @@
+services:
+  discovery-server:
+    image: chaouky/shoplite-discovery-server:3d445426
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  config-server:
+    image: chaouky/shoplite-config-server:3d445426
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  api-gateway:
+    image: chaouky/shoplite-api-gateway:3d445426
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  postgres-product:
+    image: postgres:16
+    container_name: postgres-product
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shoplite_product_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_product:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoplite_product_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  postgres-order:
+    image: postgres:16
+    container_name: postgres-order
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shoplite_order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_order:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoplite_order_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  postgres-customer:
+    image: postgres:16
+    container_name: postgres-customer
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shoplite_customer_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_customer:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoplite_customer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  product-service:
+    image: chaouky/shoplite-product-service:3d445426
+    container_name: product-service
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/shoplite_product_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres-product:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  order-service:
+    image: chaouky/shoplite-order-service:3d445426
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-order:5432/shoplite_order_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres-order:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+  customer-service:
+    image: chaouky/shoplite-customer-service:3d445426
+    container_name: customer-service
+    ports:
+      - "8084:8084"
+    restart: unless-stopped
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-customer:5432/shoplite_customer_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres-customer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shoplite-net
+
+networks:
+  shoplite-net:
+    driver: bridge
+
+volumes:
+  pg_product:
+  pg_order:
+  pg_customer:
